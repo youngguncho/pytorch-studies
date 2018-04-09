@@ -1,13 +1,16 @@
 from __future__ import print_function # Should comes first than torch
 import torch
-# import torchvision
-# import torch.nn as nn
-# import numpy as np
+from torch.autograd import Variable
 
-# ------------- Simple Matrix Generation ------------- #
-print("# ------------- Simple Matrix Generation ------------- #")
-# Generate 5x3 matrix w/o initialization
-x = torch.Tensor(5, 2)
+##
+## Autograd.Variable is the central class of the package. It wraps a Tensor, and supports nearly all of operations defined on it. Once you finish your computation you can call .backward() and have all the gradients computed automatically!!!
+## from: http://pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html
+
+# ------------- Simple Gradient ------------- #
+print("# ------------- Simple Gradient ------------- #")
+x_tensor = torch.ones(2, 2)
+x = Variable(x, requires_grad=True)
+
 print(x)
 
 # Generate 5x3 matrix with random elements

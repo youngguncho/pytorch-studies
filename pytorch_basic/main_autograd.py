@@ -6,65 +6,39 @@ from torch.autograd import Variable
 ## Autograd.Variable is the central class of the package. It wraps a Tensor, and supports nearly all of operations defined on it. Once you finish your computation you can call .backward() and have all the gradients computed automatically!!!
 ## from: http://pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html
 
-# ------------- Simple Gradient ------------- #
-print("# ------------- Simple Gradient ------------- #")
+## ------------- Simple Variable ------------- ##
+print("# ------------- Simple Variable ------------- #")
 x_tensor = torch.ones(2, 2)
-x = Variable(x, requires_grad=True)
-
+x = Variable(x_tensor, requires_grad=True)
 print(x)
 
-# Generate 5x3 matrix with random elements
-x = torch.rand(5, 2)
-print(x)
-
-# ------------- Simple Matrix Operation ------------- #
-print("# ------------- Simple Matrix Operation ------------- #")
-y = torch.rand(5, 2)
-print(x+y)
-print(torch.add(x, y))
-
-# use result as argument
-result = torch.Tensor(5, 2) # preallocation
-torch.add(x, y, out=result)
-print(result)
-
-result2 = x + y # Automatic allocation
-print(result2)
-
-# inplace addition
-y.add_(x)
+y = x + 2
 print(y)
 
-# ------------- Simple Matrix Row/Cols Operation ------------- #
-print("# ------------- Simple Matrix Row/Cols Operation ------------- #")
-x_first_col = x[:, 0]
-print(x)
-print(x_first_col)
+# y was created as a result of an operation, so it has a grad_fn.
+print (y.grad_fn)
 
-print(x.size())
-z1 = x.view(x.size(0)*x.size(1))
-z2 = x.view(-1, 5) # '-1' represents Automatic size allocation with '2'
-print(z1)
-print(z2)
+z = y * y * 3 # z = 3*y^2
+out = z.mean()
 
-# ------------- Pytorch Tensor to Numpy ------------- #
-print("# ------------- Pytorch Tensor to Numpy ------------- #")
-a = torch.ones(5)
-print(a)
+print("z = y * y * 3\n", z, out)
 
-b = a.numpy()
-print(b)
+## ------------- Simple Gradients ------------- ##
+print("# ------------- Simple Gradients ------------- #")
+# out.backward() is equivalent to doing out.backward(torch.Tensor([1.0]))
+out.backward()
+print("dout/dx \n", x.grad) # gradient of z = 3(x+2)^2, dout/dx = 3/2(x+2), x=1
 
-# Check numpy memory link
-a.add_(1)
-print(a)
-print(b)
+## ------------- Crazy Gradients ------------- ##
+print("# ------------- Crazy Gradients ------------- #")
+x = torch.randn(3)
+x = Variable(x, requires_grad=True)
+y = x * 2
+while y.data.norm() < 1000:
+    y = y * 2
 
-# ------------- Pytorch Cuda Tensor ------------- #
-print("# ------------- Pytorch Cuda Tensor ------------- #")
-if torch.cuda.is_available():
-    xc = x.cuda()
-    yc = y.cuda()
-    zc = xc + yc
-    print(zc)
-    print(x+y)
+print("y \n", y)
+
+gradients = torch.FloatTensor([0.1, 1.0, 0.0001])
+y.backward(gradients)
+print("dy/dx \n", x.grad)

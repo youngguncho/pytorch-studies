@@ -14,16 +14,14 @@ parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                     help='batch size for training (default: 64)')
 parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                     help='batch size for testing (default: 1000)')
-parser.add_argument('--epochs', type=int, default=10, metavar='N',
+parser.add_argument('--epochs', type=int, default=100, metavar='N',
                     help='number of epochs on training (default: 10)')
-parser.add_argument('--g-lr', type=float, default=0.01, metavar='LR',
-                    help='generator learning rate (default: 0.01)')
-parser.add_argument('--d-lr', type=float, default=0.01, metavar='LR',
-                    help='discriminator learning rate (default: 0.01)')
+parser.add_argument('--g-lr', type=float, default=0.0003, metavar='LR',
+                    help='generator learning rate (default: 0.001)')
+parser.add_argument('--d-lr', type=float, default=0.0003, metavar='LR',
+                    help='discriminator learning rate (default: 0.001)')
 parser.add_argument('--latent-size', type=int, default=64, metavar='L',
                     help='the length of latent vector z (default: 64)')
-parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
-                    help='SGD momentum (default: 0.5)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
@@ -107,8 +105,11 @@ def denorm(x):
     out = (x + 1) / 2
     return out.clamp(0, 1)
 
-optimizer_G = optim.SGD(G.parameters(), lr = args.g_lr, momentum=args.momentum)
-optimizer_D = optim.SGD(D.parameters(), lr = args.d_lr, momentum=args.momentum)
+# optimizer_G = optim.SGD(G.parameters(), lr = args.g_lr)
+# optimizer_D = optim.SGD(D.parameters(), lr = args.d_lr)
+
+optimizer_G = optim.Adam(G.parameters(), lr = args.g_lr)
+optimizer_D = optim.Adam(D.parameters(), lr = args.d_lr)
 
 def train(epoch):
     G.train()

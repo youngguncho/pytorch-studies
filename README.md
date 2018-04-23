@@ -9,7 +9,11 @@ Self study code for Pytorch.
 3. Vanilla GAN (Generative Adversarial Nets)
     - Simple and basic GAN on MNIST data generation
 
+4. cGAN (Conditional Generative Adversarial Nets)
+    - Conditonal GAN on MNIST data
+    - The input variable is conditioned on the label vector (one-hot vector)
+
 - TODO
-    - CGAN
     - DCGAN
+    - infoGAN
     - VAE

@@ -133,15 +133,17 @@ def train(epoch):
         fake_labels = to_var(torch.zeros(batch_size))
 
         ## -------------- Train discriminator -------------- ##
-        z = to_var(torch.randn(batch_size, args.latent_size))
-        one_hot = make_one_hot(batch_size, label)
 
-        z_input = torch.cat((z, one_hot), dim=1)
+        one_hot = make_one_hot(batch_size, label)
 
         x = data.view(batch_size, -1)
         x_input = torch.cat((x, one_hot), dim=1)
-
         real_outputs = D(x_input)
+
+        z_label = (torch.rand(batch_size)*10).type(torch.LongTensor)
+        one_hot = make_one_hot(batch_size, z_label)
+        z = to_var(torch.randn(batch_size, args.latent_size))
+        z_input = torch.cat((z, one_hot), dim=1)
 
         fake_data = G(z_input)
 
@@ -160,7 +162,7 @@ def train(epoch):
 
         ## -------------- Train Generator -------------- ##
         z = to_var(torch.randn(batch_size, args.latent_size))
-        one_hot = one_hot.index_select(0, to_var(torch.randperm(batch_size)))
+        one_hot = one_hot.index_select(0, to_var(torch.randperm(batch_size))) # Randomly permute one_hot (same as random label)
         z_input = torch.cat((z, one_hot), dim=1)
 
         fake_data = G(z_input)

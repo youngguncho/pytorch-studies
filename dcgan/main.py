@@ -17,9 +17,9 @@ parser.add_argument('--test-batch-size', type=int, default=100, metavar='N',
                     help='batch size for testing (default: 100)')
 parser.add_argument('--epochs', type=int, default=100, metavar='N',
                     help='number of epochs on training (default: 10)')
-parser.add_argument('--g-lr', type=float, default=0.0003, metavar='LR',
+parser.add_argument('--g-lr', type=float, default=0.0002, metavar='LR',
                     help='generator learning rate (default: 0.001)')
-parser.add_argument('--d-lr', type=float, default=0.0003, metavar='LR',
+parser.add_argument('--d-lr', type=float, default=0.0002, metavar='LR',
                     help='discriminator learning rate (default: 0.001)')
 parser.add_argument('--latent-size', type=int, default=100, metavar='L',
                     help='the length of latent vector z (default: 64)')
@@ -40,7 +40,8 @@ if args.cuda:
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-transform = transforms.Compose([transforms.ToTensor(),
+transform = transforms.Compose([transforms.Resize(64),
+                                transforms.ToTensor(),
                                 transforms.Normalize(mean=(0.5, 0.5, 0.5),
                                                     std=(0.5, 0.5, 0.5))])
 
@@ -69,21 +70,25 @@ class Generator(nn.Module):
         self.model = nn.Sequential(
                         # input z
                         # state_size = latent_size x 1 x 1
-                        nn.ConvTranspose2d(latent_size, 512, 4, 1, 0, bias=False),
+                        nn.ConvTranspose2d(latent_size, 1024, 4, 1, 0, bias=False),
+                        nn.BatchNorm2d(1024),
+                        nn.ReLU(True),
+                        # state_size = 1024 x 4 x 4
+                        nn.ConvTranspose2d(1024, 512, 4, 2, 1, bias=False),
                         nn.BatchNorm2d(512),
-                        nn.LeakyReLU(0.2, inplace=True),
-                        # state_size = 512 x 4 x 4
+                        nn.ReLU(True),
+                        # state_size = 512 x 8 x 8
                         nn.ConvTranspose2d(512, 256, 4, 2, 1, bias=False),
                         nn.BatchNorm2d(256),
-                        nn.LeakyReLU(0.2, inplace=True),
-                        # state_size = 256 x 8 x 8
+                        nn.ReLU(True),
+                        # state_size = 256 x 16 x 16
                         nn.ConvTranspose2d(256, 128, 4, 2, 1, bias=False),
                         nn.BatchNorm2d(128),
-                        nn.LeakyReLU(0.2, inplace=True),
-                        # state_size = 128 x 16 x 16
-                        nn.ConvTranspose2d(128, 1, 4, 2, 3, bias=False),
+                        nn.ReLU(True),
+                        # state_size = 128 x 32 x 32
+                        nn.ConvTranspose2d(128, 1, 4, 2, 1, bias=False),
                         nn.Tanh()
-                        # state_size = 1 x 28 x 28
+                        # state_size = 1 x 64 x 64
                         )
 
     def forward(self, x):
@@ -95,17 +100,20 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.model = nn.Sequential(
                         # input x
-                        # state_sizs = 1 x 28 x 28
+                        # state_sizs = 1 x 64 x 64
                         nn.Conv2d(1, 128, 4, 2, 1, bias=False),
                         nn.LeakyReLU(0.2, inplace=True),
-                        # state_sizs = 128 x 14 x 14
+                        # state_sizs = 128 x 32 x 32
                         nn.Conv2d(128, 256, 4, 2, 1, bias=False),
                         nn.LeakyReLU(0.2, inplace=True),
-                        # state_sizs = 256 x 7 x 7
+                        # state_sizs = 256 x 16 x 16
                         nn.Conv2d(256, 512, 4, 2, 1, bias=False),
                         nn.LeakyReLU(0.2, inplace=True),
-                        # state_sizs = 512 x 3 x 3
-                        nn.Conv2d(512, 1, 3, 1, 0, bias=False),
+                        # state_sizs = 512 x 8 x 8
+                        nn.Conv2d(512, 1024, 4, 2, 1, bias=False),
+                        nn.LeakyReLU(0.2, inplace=True),
+                        # state_sizs = 1024 x 4 x 4
+                        nn.Conv2d(1024, 1, 4, 1, 0, bias=False),
                         nn.Sigmoid()
                         # state_sizs = 1 x 1 x 1
                         )
@@ -136,17 +144,11 @@ def denorm(x):
     out = (x + 1) / 2
     return out.clamp(0, 1)
 
-def make_one_hot(batch_size, labels):
-    one_hot = torch.FloatTensor(batch_size, 10)
-    one_hot.zero_()
-    one_hot.scatter_(1, labels.unsqueeze(1), 1)
-    return to_var(one_hot)
-
 # optimizer_G = optim.SGD(G.parameters(), lr = args.g_lr)
 # optimizer_D = optim.SGD(D.parameters(), lr = args.d_lr)
 
-optimizer_G = optim.Adam(G.parameters(), lr = args.g_lr)
-optimizer_D = optim.Adam(D.parameters(), lr = args.d_lr)
+optimizer_G = optim.Adam(G.parameters(), lr = args.g_lr, betas=(0.5, 0.999))
+optimizer_D = optim.Adam(D.parameters(), lr = args.d_lr, betas=(0.5, 0.999))
 
 def train(epoch):
     G.train()

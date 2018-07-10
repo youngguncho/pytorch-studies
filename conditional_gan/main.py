@@ -133,7 +133,6 @@ def train(epoch):
         fake_labels = to_var(torch.zeros(batch_size))
 
         ## -------------- Train discriminator -------------- ##
-
         one_hot = make_one_hot(batch_size, label)
 
         x = data.view(batch_size, -1)

@@ -12,6 +12,7 @@ x_tensor = torch.ones(2, 2)
 x = Variable(x_tensor, requires_grad=True)
 print(x)
 
+
 y = x + 2
 print(y)
 
